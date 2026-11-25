@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Millennium Emulator</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/workbench.css"></head>
+<body>
+<header class="masthead"><h1>Millennium <small>Firmware emulator</small></h1><div class="header-links"><a class="jump-inspector" href="#inspector">Inspector ↓</a><a href="/openapi.json" target="_blank" rel="noopener">API ↗</a><span id="connection" role="status">Connecting…</span></div></header>
+<main>
+  <section class="control-deck" aria-label="Emulator controls">
+    <div class="rom-controls">
+      <label class="firmware-field">Firmware image <select id="firmware" disabled><option>No images attached</option></select></label>
+      <label>Board for next load <select id="board"><option value="auto">Auto</option><option value="mtr1">MTR1 / CALA</option><option value="mtr2">MTR2 / TTY</option></select></label>
+      <div class="deck-actions"><button id="load" disabled>Load ROM</button><button id="attach-fw" class="primary">Attach…</button><label class="file-button">Upload &amp; load<input id="upload-firmware" type="file" accept=".bin" class="sr-only" aria-label="Upload and load a .bin file"></label></div>
+    </div>
+    <p id="firmware-note" role="status"></p>
+    <div class="run-controls">
+      <div class="deck-actions"><button id="resume" disabled>Run</button><button id="pause" disabled>Pause</button><button id="step" disabled>Step</button><button id="advance" title="Run one million instructions" disabled>Run 1M</button><button id="reset" disabled>Reset</button></div>
+      <label>Speed <select id="speed"><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4" selected>4×</option><option value="8">8×</option><option value="16">16×</option><option value="32">32×</option><option value="64">64×</option></select></label>
+      <output id="status" data-mode="idle">No ROM loaded</output>
+    </div>
+  </section>
+  <dialog id="attach-dialog" aria-labelledby="attach-title">
+    <form id="attach-form">
+      <h2 id="attach-title">Attach firmware</h2>
+      <p>Enter the path to a <code>.bin</code> file or a folder on the emulator host.</p>
+      <label>Path <input id="attach-path" type="text" required autofocus spellcheck="false" autocomplete="off" placeholder="C:\firmware\TEST.BIN"></label>
+      <p id="attach-error" role="alert" hidden></p>
+      <div class="deck-actions"><button id="cancel-attach" type="button">Cancel</button><button id="submit-attach" class="primary">Attach</button></div>
+    </form>
+  </dialog>
+  <div id="error" role="alert" hidden></div>
+  <div class="workbench">
+    <aside class="terminal" aria-labelledby="phone-model">
+      <section class="phone-stage" data-variant="wall">
+        <div class="stage-head"><h2 id="phone-model">Millennium MultiPay</h2><label>Cabinet <select id="phone-style"><option value="auto">Auto</option><option value="wall">MultiPay</option><option value="desk">Desk</option></select></label></div>
+        <section class="phone" data-variant="wall" data-card-position="out" aria-label="Nortel Millennium telephone">
+          <div class="cabinet-top">
+            <div class="coin-denominations" aria-hidden="true">5<br>10<br>25<br>$</div>
+            <button id="face-coin" class="coin-inlet" aria-label="Insert selected coin" title="Insert the coin selected below"><span class="sr-only">Insert coin</span></button>
+            <div class="phone-brand"><span class="nortel-wordmark">NORTEL<span class="nortel-orbit" aria-hidden="true"></span></span><span class="millennium-wordmark">MILLENNIUM</span></div>
+          </div>
+          <div class="upper-face">
+            <div class="instruction-card" aria-hidden="true">
+              <div class="payment-marks"><span class="phonecard-mark">Phone<br>Card</span><span class="visa-mark">VISA</span><span class="mastercard-mark"><i></i><i></i><b>MasterCard</b></span><span class="chip-mark">CHIP<br>CARDS</span></div>
+              <div class="instruction-columns"><div><strong>CASH CALLS</strong><span>Lift receiver<br>Deposit coins<br>Dial number</span><strong>CARD CALLS</strong><span>Insert card, then remove<br>Follow display instructions</span></div><div><strong>APPELS À PIÈCES</strong><span>Soulevez le combiné<br>Déposez les pièces<br>Composez le numéro</span><strong>APPELS AVEC CARTE</strong><span>Insérez puis retirez la carte</span></div></div>
+              <div class="instruction-footer"><b>NO CHANGE PROVIDED</b><span>EMERGENCY 911 · OPERATOR 0</span></div>
+            </div>
+            <div class="display-module">
+              <div class="screen" aria-label="Firmware display"><pre id="display">                    
+                    </pre><span class="display-caption">VACUUM FLUORESCENT DISPLAY · 2 × 20</span></div>
+            </div>
+            <div class="phone-actions"><button data-key="volumeDown" aria-label="Volume down">▾<small>VOLUME −</small></button><button data-key="volumeUp" aria-label="Volume up">▴<small>VOLUME +</small></button><button data-key="language">Language<small>LANGUE</small></button><button data-key="next">◆<small>NEXT CALL</small></button></div>
+          </div>
+          <div class="lower-face">
+            <div class="receiver-well"><span class="cradle cradle-top" aria-hidden="true"></span><span class="cradle cradle-bottom" aria-hidden="true"></span>
+              <button id="handset" class="handset" aria-label="Lift handset" aria-pressed="false" title="Lift handset">
+                <svg class="receiver" viewBox="0 0 100 400" aria-hidden="true" focusable="false"><defs><linearGradient id="receiver-body" x1="0" x2="1"><stop stop-color="#08090a"/><stop offset=".32" stop-color="#343638"/><stop offset=".63" stop-color="#202224"/><stop offset="1" stop-color="#070809"/></linearGradient><linearGradient id="receiver-cap" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#454749"/><stop offset=".35" stop-color="#1b1d1f"/><stop offset="1" stop-color="#08090a"/></linearGradient></defs><path d="M47 7C23 8 10 27 9 53C7 88 11 118 13 145L13 267C9 299 6 332 12 357C17 381 35 393 59 389C79 386 94 371 93 351L91 324C90 310 81 302 69 305L54 311C47 291 45 269 45 247L45 155C45 130 47 108 54 88L72 94C84 98 93 88 94 73L94 48C95 22 75 4 47 7Z" fill="url(#receiver-body)" stroke="#08090a" stroke-width="2"/><path d="M47 8C24 10 12 28 11 52L12 89C13 105 27 111 45 102L54 88L72 94C84 97 92 86 93 72L93 49C93 23 75 6 47 8Z" fill="url(#receiver-cap)"/><path d="M15 307C9 327 9 346 14 360C20 381 37 391 59 387C79 383 91 371 91 351L89 325C88 311 81 306 70 308L53 315C39 316 26 314 15 307Z" fill="url(#receiver-cap)"/><path d="M22 120C19 168 20 240 23 286" fill="none" stroke="#67696b" stroke-opacity=".25" stroke-width="3"/><path d="M15 88Q28 107 48 96M17 326Q42 341 84 325" fill="none" stroke="#090a0b" stroke-width="3"/></svg>
+                <span id="handset-label" class="sr-only">↗ Lift handset</span>
+              </button>
+              <span class="receiver-cord" aria-hidden="true"></span>
+            </div>
+            <div class="dialing-panel"><div class="number-card" aria-hidden="true">PUBLIC TELEPHONE <span>TÉLÉPHONE PUBLIC</span></div><div class="keypad" id="keypad"></div>
+              <div class="speed-dial" aria-hidden="true"><div class="speed-keys-row"><i></i><i></i><i></i><i></i><i></i></div><div class="speed-label-card"><span>LOCAL SERVICES</span></div><div class="speed-keys-row"><i></i><i></i><i></i><i></i><i></i></div></div>
+              <div class="card-reader-housing"><button id="face-card" class="face-card" aria-label="Insert magnetic card" title="Insert the magnetic card configured in the reader panel"><span class="card-glyphs" aria-hidden="true"><i></i><i></i></span><span class="reader-slit" aria-hidden="true"></span><span class="inserted-card" aria-hidden="true"></span><span class="reader-label">INSERT CARD · INSÉREZ LA CARTE</span><span id="face-card-label" class="sr-only">Insert magnetic card</span></button></div>
+            </div>
+          </div>
+          <div class="coin-vault" aria-hidden="true"><div class="coin-return"><span>$</span><i></i><small>COIN RETURN</small></div><div class="vault-door"><i class="vault-lock"></i><span>NORTHERN TELECOM</span></div></div>
+          <i class="cabinet-screw screw-left" aria-hidden="true"></i><i class="cabinet-screw screw-right" aria-hidden="true"></i>
+        </section>
+        <div class="phone-console"><div class="coin-slot"><label>Coin type <select id="coin-type"></select></label><button id="coin">Insert coin</button></div></div>
+      </section>
+    </aside>
+    <section class="inspector" id="inspector" aria-label="Inspector" tabindex="-1">
+      <div class="inspector-tabs" role="tablist" aria-label="Inspector views">
+        <button id="tab-debug" role="tab" aria-controls="view-debug" aria-selected="true">Debugger</button>
+        <button id="tab-io" role="tab" aria-controls="view-io" aria-selected="false" tabindex="-1">Phone I/O</button>
+        <button id="tab-state" role="tab" aria-controls="view-state" aria-selected="false" tabindex="-1">ROM &amp; state</button>
+        <button id="tab-events" role="tab" aria-controls="view-events" aria-selected="false" tabindex="-1">Events</button>
+      </div>
+      <div id="view-debug" role="tabpanel" aria-labelledby="tab-debug" tabindex="0">
+      <section class="panel"><h2>Processor</h2><p id="time" class="readout"></p><div id="registers" class="registers"></div><div class="meta" id="rom-info"></div></section>
+      <section class="panel"><h2>Execution</h2><div class="controls"><label>Logical address <input id="disasm-address" placeholder="Current PC" size="12"></label><button id="disassemble">Disassemble</button><label>Physical breakpoint <input id="break-address" placeholder="0x00000" size="12"></label><button id="add-break">Add</button><button id="clear-break">Clear all</button></div><div class="table-wrap"><table><thead><tr><th>Logical</th><th>Physical</th><th>Bytes</th><th>Instruction / symbols</th></tr></thead><tbody id="disassembly"></tbody></table></div><pre id="breakpoints"></pre></section>
+      <section class="panel"><h2>Memory &amp; symbols</h2><div class="controls"><select id="memory-space" aria-label="Address space"><option>physical</option><option>logical</option></select><input id="memory-address" value="0x00000" size="12" aria-label="Memory address"><button id="read-memory">Read 256 bytes</button><input id="symbol-search" aria-label="Search symbols" placeholder="Search symbols"><button id="find-symbol">Find</button></div><pre id="memory"></pre><pre id="symbols"></pre></section>
+      </div>
+      <div id="view-state" role="tabpanel" aria-labelledby="tab-state" tabindex="0" hidden>
+      <section class="panel"><h2>Binary patches <a href="/api/firmware/export" class="subtle">Download patched .bin ↗</a></h2><p class="muted">Use ROM file offsets. Expected and replacement bytes must have the same length.</p><div class="controls"><input id="patch-offset" aria-label="ROM offset" placeholder="Offset, e.g. 0x200" size="18"><input id="patch-expected" aria-label="Expected hex bytes" placeholder="Expected hex bytes"><input id="patch-hex" aria-label="Replacement hex bytes" placeholder="Replacement hex bytes"><button id="apply-patch">Apply</button><button id="revert-patch">Revert last</button></div><pre id="patches"></pre></section>
+      <section class="panel"><h2>Snapshots &amp; traces</h2><div class="controls"><input id="snapshot-name" value="baseline" size="14" aria-label="Snapshot name"><button id="save-snapshot">Save</button><button id="restore-snapshot">Restore</button><button id="download-snapshot">Export JSON</button><label class="file-button">Import JSON<input id="import-snapshot" type="file" accept=".json" class="sr-only" aria-label="Import snapshot JSON"></label><label class="check"><input id="trace-enabled" type="checkbox"> Trace instructions</label><a class="subtle" href="/api/trace" target="_blank" rel="noopener">Trace JSON ↗</a></div><p class="muted">Named snapshots last until the server exits. Export JSON to keep them.</p></section>
+      <section class="panel"><h2>Model capabilities</h2><dl id="capabilities"></dl></section>
+      </div>
+      <div id="view-io" role="tabpanel" aria-labelledby="tab-io" tabindex="0" hidden>
+      <section class="panel">
+        <h2>Line &amp; cabinet switches</h2>
+        <div class="switches">
+          <label class="check"><input id="lineConnected" type="checkbox" checked> Line connected</label>
+          <label class="check"><input id="dialTone" type="checkbox" checked> Dial tone available</label>
+          <label class="check"><input id="reversed" type="checkbox"> Reverse polarity</label>
+          <label class="check"><input id="answerTone" type="checkbox"> Modem answer tone</label>
+          <label class="check"><input id="carrier" type="checkbox"> Modem carrier / mark</label>
+          <label class="check"><input id="ring" type="checkbox"> Incoming ringing</label>
+          <label class="check"><input id="coverOpen" type="checkbox"> Access cover open</label>
+          <label class="check"><input id="cashboxRemoved" type="checkbox"> Cashbox removed</label>
+        </div>
+        <div class="controls"><button id="answer-call">Answer call</button><label>Delay (ms) <input id="answer-delay" value="3000" size="6" inputmode="numeric"></label></div>
+        <p class="muted">Lift the handset and let dialing finish before answering.</p><pre id="device-state"></pre>
+      </section>
+      <section class="panel"><h2>Card reader</h2><label>Track 2 data<input id="track2" class="wide" value=";4111111111111111=3012101000000000000?"></label><div class="controls"><button id="insert-magnetic">Insert magnetic card</button><button id="remove-card">Remove</button></div><label>Smart-card image (13–32 bytes)<textarea id="smart-image" class="wide" rows="3" placeholder="Hex dump of a GPM103 card"></textarea></label><div class="controls"><label class="file-button">Load card image<input id="smart-file" type="file" class="sr-only" aria-label="Load card image"></label><button id="insert-smart">Insert smart card</button><button id="export-card">Export card state</button></div><label class="check"><input id="smart-readonly" type="checkbox"> Write-protect smart card</label><pre id="card-state"></pre></section>
+      <section class="panel"><h2>NCC TCP target</h2><div class="controls"><select id="ncc-mode" aria-label="NCC target mode"><option value="connect">Arm target</option><option value="off">Disable / disconnect</option></select><input id="ncc-host" value="127.0.0.1" aria-label="NCC host"><input id="ncc-port" value="16420" size="6" aria-label="NCC port"><label>Receive latency (ms) <input id="ncc-latency" value="100" size="6"></label><label class="check"><input id="ncc-handshake" type="checkbox" checked> Simulate modem handshake</label><button id="configure-ncc">Apply</button></div><p class="muted">An armed target connects on the first ASCI1 transmission. The bridge passes bytes unchanged.</p><pre id="ncc-state"></pre></section>
+      <section class="panel"><h2>Device injection</h2><div class="controls"><select id="injection-type" aria-label="Message destination"><option value="telephony">Telephony message</option><option value="serial0">Validator ASCI0</option><option value="serial1">Management ASCI1</option></select><input id="injection-hex" aria-label="Message hex bytes" placeholder="Hex bytes, e.g. 88"><button id="inject">Inject</button></div><p class="muted">Include any required protocol framing and checksum.</p></section>
+      </div>
+      <div id="view-events" role="tabpanel" aria-labelledby="tab-events" tabindex="0" hidden>
+      <section class="panel"><h2>Event log <button id="refresh-events" class="small">Refresh</button></h2><pre id="events" class="events" tabindex="0" aria-label="Event log"></pre></section>
+      </div>
+    </section>
+  </div>
+</main>
+<script type="module" src="/app.js"></script></body></html>

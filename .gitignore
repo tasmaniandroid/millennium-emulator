@@ -1,0 +1,11 @@
+/millennium.exe
+/millennium
+__pycache__/
+*.py[cod]
+*.egg-info/
+/.venv/
+*.bin
+*.BIN
+*.MAP
+*.map
+*.session.json
